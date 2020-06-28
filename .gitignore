@@ -2,7 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+# SSH files
+interactiverobot2
+interactiverobot2.pub
 # C extensions
 *.so
 
