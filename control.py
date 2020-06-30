@@ -33,6 +33,9 @@ import datetime
 import random
 import os
 
+from gpiozero import LED
+LED(3).off()
+
 random.seed() # Initialize internal state of random number generator based on time
 soundsnippetDir = "/home/pi/soundsnippets"
 
@@ -41,15 +44,17 @@ soundsnippetDir = "/home/pi/soundsnippets"
 # Time formating: https://docs.python.org/2/library/time.html
 now = time.localtime()
 now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
-print(now)
+#now = time.strptime("21 11 07 09:00", "%y %m %d %H:%M")
+print(time.strftime("%H:%M %d.%m.%y", now))
 
 def scanDirectory(path):
     print("Scanning " + path)
-    for files in os.walk(path):
-        for filename in files:
-            print(filename)
+    for dirpath, dirnames, filenames in os.walk(path):
+        # Following loop only required if weightings should be read
+        for filename in filenames:
+            print("filename: " + filename)
             #print(os.path.join(path, filename))
-
+        return(filenames)
 
 # Call with getRandom(70) to get True in 70% of cases
 def getRandom(percentage):
@@ -65,37 +70,40 @@ def findFiles(now):
     dayT = time.strftime("%m%d", now)
     timeT = time.strftime("%H%M", now)
     
-    scanDirectory(os.path.join(soundsnippetDir, "season", seasonT))
-    scanDirectory(os.path.join(soundsnippetDir, "day", dayT))
-    scanDirectory(os.path.join(soundsnippetDir, "time", timeT))
-
-    # TEMP
-    seasonSpecific = True
-    daySpecific = True
-    timeSpecific = True
-
-
-    return((seasonSpecific, daySpecific, timeSpecific))
+    seasonSpecific = scanDirectory(os.path.join(soundsnippetDir, "season", seasonT))
+    daySpecific = scanDirectory(os.path.join(soundsnippetDir, "day", dayT))
+    timeSpecific = scanDirectory(os.path.join(soundsnippetDir, "time", timeT))
+    generic = scanDirectory(os.path.join(soundsnippetDir, "generic"))
+    return((seasonSpecific, daySpecific, timeSpecific, generic))
     
 def getWeightings():
     print("Calculating weighted vector of files")
     
-
-    
-    
+seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
 
-seasonSpecific, daySpecific, timeSpecific = findFiles(now)
+print(seasonSpecific)
+countSeason = len(seasonSpecific)
+countDay = len(daySpecific)
+countTime = len(timeSpecific)
+countGeneric = len(generic)
 
 # Decide which song category to play
 if getRandom(50):
     print("Only flashing eyes")
-if seasonSpecific  and getRandom(30):
+    sound = "Silence"
+elif countSeason > 0  and getRandom(30):
     print("Playing seasonal")
-elif daySpecific and getRandom(50):
+    sound = seasonSpecific[random.randint(0, countSeason-1)]
+elif countDay > 0 and getRandom(70):
     print("Playing day specific")
-elif timeSpecific and getRandom(30):
+    sound = daySpecific[random.randint(0, countDay-1)]
+elif countTime > 0 and getRandom(30):
     print("Playing time specific")
+    sound = timeSpecific[random.randint(0, countTime-1)]
 else:
     print("Playing generic")
+    sound = generic[random.randint(0, countGeneric-1)]
 
+
+print("PLAYING SOUND: " + sound)
