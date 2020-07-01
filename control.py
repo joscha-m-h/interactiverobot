@@ -35,7 +35,7 @@ import os
 
 from gpiozero import LED
 LED(3).off()
-
+LED(20).on()
 random.seed() # Initialize internal state of random number generator based on time
 soundsnippetDir = "/home/pi/soundsnippets"
 
