@@ -34,36 +34,34 @@
 #
 # - FILENAMES
 # - Put any integer 0-9 as first character in file name
-#    0 - Play extremely rarely
+#    1 - Play extremely rarely
 #    5 - Play average (default)
 #    9 - Play frequently
 
+### IMPORTS ############################################################
 
 import time
 import datetime
 import random
 import os
 
-from gpiozero import LED, Button
+from gpiozero import LED, Button, MotionSensor
 from threading import Thread
 
+### INITIALIZATION #####################################################
 laser = LED(3)
 lefteye = LED(20)
 righteye = LED(21)
-movement = Button(16)
+pir = MotionSensor(16, pull_up = False, threshold=0.7)
+#movement = Button(16)
 laser.off() # legacy
-lefteye.on()
+lefteye.on() # shows that SW is running after bootup
 
 random.seed() # Initialize internal state of random number generator based on time
 soundsnippetDir = "/home/pi/soundsnippets"
 
 
-
-# Time formating: https://docs.python.org/2/library/time.html
-now = time.localtime()
-now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
-#now = time.strptime("21 11 07 09:00", "%y %m %d %H:%M")
-print(time.strftime("%H:%M %d.%m.%y", now))
+### THREADS ############################################################
 
 class flashingLed():
     def __init__(self, ledid):
@@ -79,6 +77,8 @@ class flashingLed():
             time.sleep(abs(random.gauss(.5, .75)))
             self.ledid.off()
             time.sleep(abs(random.gauss(.2, .4)))
+
+### FUNCTIONS ##########################################################
 
 def scanDirectory(path):
     #print("Scanning " + path)
@@ -120,83 +120,83 @@ def pickRandom(selectionValues): # selection values is a tuple containing [0] = 
     print(fileName)
     print(selectionValues[2])
     return(fullpath)
-
-#while True:
-#    print("Wait for motion")
-#    pir.wait_for_motion()
-#    print("Motion detected")
-#    time.sleep(1)
-
-seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
-
-leftClass = flashingLed(lefteye)
-rightClass = flashingLed(righteye)
-
-countSeason = len(seasonSpecific[0])
-countDay = len(daySpecific[0])
-countTime = len(timeSpecific[0])
-countGeneric = len(generic[0])
-
-# Decide which song category to play
-if getRandom(50):
-    print("Only flashing eyes")
-    sound = "Silence" # Random choices returns a list, so we make this a list too
-elif countSeason > 0  and getRandom(30):
-    print("Playing seasonal")
-    sound = pickRandom(seasonSpecific)
-elif countDay > 0 and getRandom(70):
-    print("Playing day specific")
-    sound = pickRandom(daySpecific)
-elif countTime > 0 and getRandom(30):
-    print("Playing time specific")
-    sound = pickRandom(timeSpecific)
-else:
-    print("Playing generic")
-    sound = pickRandom(generic)
-
-
-if sound == "Silence":
-    print("SILENCE - Flashing eyes only")
     
-    threadLeft = Thread(target = leftClass.start)
-    threadRight = Thread(target = rightClass.start)
+### MAIN CODE ##########################################################
 
-    threadLeft.start()
-    threadRight.start()
+while True:
+    print("Wait for motion")
+    pir.wait_for_motion()
+    print("Motion detected")
+    # Time formating: https://docs.python.org/2/library/time.html
+    now = time.localtime()
+    now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
+    #now = time.strptime("21 11 07 09:00", "%y %m %d %H:%M")
+    print(time.strftime("%H:%M %d.%m.%y", now))
 
-    time.sleep(2) # Flashing eyes for 2 seconds
-    
-    leftClass.stop()
-    rightClass.stop()
-    
-else: 
-    print("PLAYING SOUND: " + sound)
-    sound = "/home/pi/Downloads/test.mp3" # TODO DELETE
-    # Console command ffplay (does not stop automatically)
-    # ffplay -nodisp -hide_banner ../../Downloads/test.mp3 
-    #command = "ffplay -nodisp -hide_banner"
-    
-    # Console command mplayer (works just fine)
-    # mplayer  ../../Downloads/test.mp3 
-    command = "mplayer"  
+    seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
-    threadLeft = Thread(target = leftClass.start)
-    threadRight = Thread(target = rightClass.start)
+    leftClass = flashingLed(lefteye)
+    rightClass = flashingLed(righteye)
 
-    threadLeft.start()
-    threadRight.start()
-    print("playing")
-    
-    os.system(command + " "+ sound)
-    
-    leftClass.stop()
-    rightClass.stop()
-    
-print("FINISHED")
+    countSeason = len(seasonSpecific[0])
+    countDay = len(daySpecific[0])
+    countTime = len(timeSpecific[0])
+    countGeneric = len(generic[0])
+
+    # Decide which song category to play
+    if getRandom(70):
+        print("Only flashing eyes")
+        sound = "Silence" # Random choices returns a list, so we make this a list too
+    elif countSeason > 0  and getRandom(30):
+        print("Playing seasonal")
+        sound = pickRandom(seasonSpecific)
+    elif countDay > 0 and getRandom(70):
+        print("Playing day specific")
+        sound = pickRandom(daySpecific)
+    elif countTime > 0 and getRandom(30):
+        print("Playing time specific")
+        sound = pickRandom(timeSpecific)
+    else:
+        print("Playing generic")
+        sound = pickRandom(generic)
+
+
+    if sound == "Silence":
+        print("SILENCE - Flashing eyes only")
         
-# Thread
-#while True:
-#    lefteye.on()
-#    time.sleep(abs(random.gauss(.5, .75)))
-#    lefteye.off()
-#    time.sleep(abs(random.gauss(.2, .4)))
+        threadLeft = Thread(target = leftClass.start)
+        threadRight = Thread(target = rightClass.start)
+
+        threadLeft.start()
+        threadRight.start()
+
+        time.sleep(2) # Flashing eyes for 2 seconds
+        
+        leftClass.stop()
+        rightClass.stop()
+        
+    else: 
+        print("PLAYING SOUND: " + sound)
+        sound = "/home/pi/Downloads/test.mp3" # TODO DELETE
+        # Console command ffplay (does not stop automatically)
+        # ffplay -nodisp -hide_banner ../../Downloads/test.mp3 
+        #command = "ffplay -nodisp -hide_banner"
+        
+        # Console command mplayer (works just fine)
+        # mplayer  ../../Downloads/test.mp3 
+        command = "mplayer"  
+
+        threadLeft = Thread(target = leftClass.start)
+        threadRight = Thread(target = rightClass.start)
+
+        threadLeft.start()
+        threadRight.start()
+        print("playing")
+        
+        os.system(command + " "+ sound)
+        
+        leftClass.stop()
+        rightClass.stop()
+
+    print("FINISHED - Sleep 1s and go again")
+    time.sleep(1)
