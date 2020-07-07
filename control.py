@@ -133,3 +133,4 @@ if sound == "Silence":
     print("SILENCE - Flashing eyes only")
 else: 
     print("PLAYING SOUND: " + sound)
+    playsound()
