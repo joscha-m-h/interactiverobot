@@ -3,6 +3,12 @@
 # by mjoscha@gmail.com
 # Created 28 June 2020
 
+# Features
+# - Eyes flashing with Gaussian probabilities ;)
+# - Season, Day and Time-specific sounds
+# - Sound specific playback probabilities
+# - 
+
 # Requires 
 # - Might require a restart for new audio devices
 # - Be cautious not to have any player open -> creates resource busy failures
@@ -39,11 +45,11 @@ import random
 import os
 
 from gpiozero import LED, Button
-from pydub import AudioSegment
-from pydub import playback
+from threading import Thread
 
 laser = LED(3)
 lefteye = LED(20)
+righteye = LED(21)
 movement = Button(16)
 laser.off() # legacy
 lefteye.on()
@@ -58,6 +64,21 @@ now = time.localtime()
 now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
 #now = time.strptime("21 11 07 09:00", "%y %m %d %H:%M")
 print(time.strftime("%H:%M %d.%m.%y", now))
+
+class flashingLed():
+    def __init__(self, ledid):
+        self._running = True
+        self.ledid = ledid
+        
+    def stop(self):
+        self._running = False
+        
+    def start(self):
+        while self._running:
+            self.ledid.on()
+            time.sleep(abs(random.gauss(.5, .75)))
+            self.ledid.off()
+            time.sleep(abs(random.gauss(.2, .4)))
 
 def scanDirectory(path):
     #print("Scanning " + path)
@@ -108,6 +129,9 @@ def pickRandom(selectionValues): # selection values is a tuple containing [0] = 
 
 seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
+leftClass = flashingLed(lefteye)
+rightClass = flashingLed(righteye)
+
 countSeason = len(seasonSpecific[0])
 countDay = len(daySpecific[0])
 countTime = len(timeSpecific[0])
@@ -133,6 +157,18 @@ else:
 
 if sound == "Silence":
     print("SILENCE - Flashing eyes only")
+    
+    threadLeft = Thread(target = leftClass.start)
+    threadRight = Thread(target = rightClass.start)
+
+    threadLeft.start()
+    threadRight.start()
+
+    time.sleep(2) # Flashing eyes for 2 seconds
+    
+    leftClass.stop()
+    rightClass.stop()
+    
 else: 
     print("PLAYING SOUND: " + sound)
     sound = "/home/pi/Downloads/test.mp3" # TODO DELETE
@@ -143,5 +179,24 @@ else:
     # Console command mplayer (works just fine)
     # mplayer  ../../Downloads/test.mp3 
     command = "mplayer"  
+
+    threadLeft = Thread(target = leftClass.start)
+    threadRight = Thread(target = rightClass.start)
+
+    threadLeft.start()
+    threadRight.start()
+    print("playing")
+    
     os.system(command + " "+ sound)
     
+    leftClass.stop()
+    rightClass.stop()
+    
+print("FINISHED")
+        
+# Thread
+#while True:
+#    lefteye.on()
+#    time.sleep(abs(random.gauss(.5, .75)))
+#    lefteye.off()
+#    time.sleep(abs(random.gauss(.2, .4)))
