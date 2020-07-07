@@ -4,8 +4,10 @@
 # Created 28 June 2020
 
 # Requires 
-# - Python 3 (list.copy()) command
-# - Playsound - https://pypi.org/project/playsound/
+# - Might require a restart for new audio devices
+# - Be cautious not to have any player open -> creates resource busy failures
+# - Python 3 (for list.copy() command)
+# - ffplay or mplayer (sudo apt-get install mplayer)
 
 # TODO
 # - Create thread for playing sound
@@ -37,8 +39,8 @@ import random
 import os
 
 from gpiozero import LED, Button
-from playsound import playsound
-
+from pydub import AudioSegment
+from pydub import playback
 
 laser = LED(3)
 lefteye = LED(20)
@@ -133,4 +135,13 @@ if sound == "Silence":
     print("SILENCE - Flashing eyes only")
 else: 
     print("PLAYING SOUND: " + sound)
-    playsound()
+    sound = "/home/pi/Downloads/test.mp3" # TODO DELETE
+    # Console command ffplay (does not stop automatically)
+    # ffplay -nodisp -hide_banner ../../Downloads/test.mp3 
+    #command = "ffplay -nodisp -hide_banner"
+    
+    # Console command mplayer (works just fine)
+    # mplayer  ../../Downloads/test.mp3 
+    command = "mplayer"  
+    os.system(command + " "+ sound)
+    
