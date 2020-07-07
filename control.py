@@ -3,6 +3,8 @@
 # by mjoscha@gmail.com
 # Created 28 June 2020
 
+# Requires python 3 (list.copy()) command
+
 
 # TODO
 # - Create thread for playing sound
@@ -52,13 +54,18 @@ now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
 print(time.strftime("%H:%M %d.%m.%y", now))
 
 def scanDirectory(path):
-    print("Scanning " + path)
+    #print("Scanning " + path)
     for dirpath, dirnames, filenames in os.walk(path):
-        # Following loop only required if weightings should be read
-        for filename in filenames:
-            print("filename: " + filename)
-            #print(os.path.join(path, filename))
-        return(filenames)
+        fileweights = filenames.copy()
+        for index, filename in enumerate(filenames):
+            try:
+                weight = int(filename[0])
+            except:
+                weight = 5
+            fileweights[index] = weight
+                
+            #print("filename: " + filename)
+        return(fileweights, filenames)
 
 # Call with getRandom(70) to get True in 70% of cases
 def getRandom(percentage):
@@ -79,10 +86,6 @@ def findFiles(now):
     timeSpecific = scanDirectory(os.path.join(soundsnippetDir, "time", timeT))
     generic = scanDirectory(os.path.join(soundsnippetDir, "generic"))
     return((seasonSpecific, daySpecific, timeSpecific, generic))
-    
-def getWeightings():
-    print("Calculating weighted vector of files")
-
 
 #while True:
 #    print("Wait for motion")
@@ -91,29 +94,27 @@ def getWeightings():
 #    time.sleep(1)
 seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
-
-print(seasonSpecific)
-countSeason = len(seasonSpecific)
-countDay = len(daySpecific)
-countTime = len(timeSpecific)
-countGeneric = len(generic)
+countSeason = len(seasonSpecific[0])
+countDay = len(daySpecific[0])
+countTime = len(timeSpecific[0])
+countGeneric = len(generic[0])
 
 # Decide which song category to play
 if getRandom(50):
     print("Only flashing eyes")
-    sound = "Silence"
+    sound = ["Silence"] # Random choices returns a list, so we make this a list too
 elif countSeason > 0  and getRandom(30):
     print("Playing seasonal")
-    sound = seasonSpecific[random.randint(0, countSeason-1)]
+    sound = random.choices(seasonSpecific[1], weights = seasonSpecific[0])
 elif countDay > 0 and getRandom(70):
     print("Playing day specific")
-    sound = daySpecific[random.randint(0, countDay-1)]
+    sound = random.choices(daySpecific[1], weights = daySpecific[0])
 elif countTime > 0 and getRandom(30):
     print("Playing time specific")
-    sound = timeSpecific[random.randint(0, countTime-1)]
+    sound = random.choices(timeSpecific[1], weights = timeSpecific[0])
 else:
     print("Playing generic")
-    sound = generic[random.randint(0, countGeneric-1)]
+    sound = random.choices(generic[1], weights = generic[0])
 
-
-print("PLAYING SOUND: " + sound)
+print(sound)
+print("PLAYING SOUND: " + sound[0])
