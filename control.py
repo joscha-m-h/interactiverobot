@@ -16,10 +16,10 @@
 # - ffplay or mplayer (sudo apt-get install mplayer)
 
 # TODO
-# - Create thread for playing sound
-# - Create thread for blinking with eyes
-# - Test motion sensor
-# - Modify category selection probabilities to consider the number of songs in playlist?
+# - Port everything to old Raspi
+# - Download / create soundsnippets
+# - Solder LEDs and PIR
+# - Create carton prototype
 
 # Readme
 # Encoding of soundsnippet folder in /home/pi/soundsnippets
