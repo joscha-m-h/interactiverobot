@@ -82,7 +82,13 @@ def findFiles(now):
     
 def getWeightings():
     print("Calculating weighted vector of files")
-    
+
+
+#while True:
+#    print("Wait for motion")
+#    pir.wait_for_motion()
+#    print("Motion detected")
+#    time.sleep(1)
 seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
 
