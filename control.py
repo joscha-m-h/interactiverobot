@@ -3,8 +3,9 @@
 # by mjoscha@gmail.com
 # Created 28 June 2020
 
-# Requires python 3 (list.copy()) command
-
+# Requires 
+# - Python 3 (list.copy()) command
+# - Playsound - https://pypi.org/project/playsound/
 
 # TODO
 # - Create thread for playing sound
@@ -36,6 +37,9 @@ import random
 import os
 
 from gpiozero import LED, Button
+from playsound import playsound
+
+
 laser = LED(3)
 lefteye = LED(20)
 movement = Button(16)
@@ -65,7 +69,7 @@ def scanDirectory(path):
             fileweights[index] = weight
                 
             #print("filename: " + filename)
-        return(fileweights, filenames)
+        return(fileweights, filenames, dirpath)
 
 # Call with getRandom(70) to get True in 70% of cases
 def getRandom(percentage):
@@ -86,12 +90,20 @@ def findFiles(now):
     timeSpecific = scanDirectory(os.path.join(soundsnippetDir, "time", timeT))
     generic = scanDirectory(os.path.join(soundsnippetDir, "generic"))
     return((seasonSpecific, daySpecific, timeSpecific, generic))
+    
+def pickRandom(selectionValues): # selection values is a tuple containing [0] = weights, [1] = filenames, [2] = path
+    fileName = random.choices(selectionValues[1], weights = selectionValues[0]) # Returns a list with one element
+    fullpath = os.path.join(selectionValues[2], fileName[0])
+    print(fileName)
+    print(selectionValues[2])
+    return(fullpath)
 
 #while True:
 #    print("Wait for motion")
 #    pir.wait_for_motion()
 #    print("Motion detected")
 #    time.sleep(1)
+
 seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
 countSeason = len(seasonSpecific[0])
@@ -102,19 +114,22 @@ countGeneric = len(generic[0])
 # Decide which song category to play
 if getRandom(50):
     print("Only flashing eyes")
-    sound = ["Silence"] # Random choices returns a list, so we make this a list too
+    sound = "Silence" # Random choices returns a list, so we make this a list too
 elif countSeason > 0  and getRandom(30):
     print("Playing seasonal")
-    sound = random.choices(seasonSpecific[1], weights = seasonSpecific[0])
+    sound = pickRandom(seasonSpecific)
 elif countDay > 0 and getRandom(70):
     print("Playing day specific")
-    sound = random.choices(daySpecific[1], weights = daySpecific[0])
+    sound = pickRandom(daySpecific)
 elif countTime > 0 and getRandom(30):
     print("Playing time specific")
-    sound = random.choices(timeSpecific[1], weights = timeSpecific[0])
+    sound = pickRandom(timeSpecific)
 else:
     print("Playing generic")
-    sound = random.choices(generic[1], weights = generic[0])
+    sound = pickRandom(generic)
 
-print(sound)
-print("PLAYING SOUND: " + sound[0])
+
+if sound == "Silence":
+    print("SILENCE - Flashing eyes only")
+else: 
+    print("PLAYING SOUND: " + sound)
