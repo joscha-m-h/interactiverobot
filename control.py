@@ -109,7 +109,6 @@ def findFiles(now):
     dayT = time.strftime("%m%d", now)
     timeT = time.strftime("%H%M", now)
     weekdayT = time.strftime("%w %A", now).lower()
-    print("Weekday " + weekdayT)
     
     seasonSpecific = scanDirectory(os.path.join(soundsnippetDir, "season", seasonT))
     weekdaySpecific = scanDirectory(os.path.join(soundsnippetDir, "weekday", weekdayT))
@@ -140,7 +139,7 @@ while True:
     print("Motion detected")
     # Time formating: https://docs.python.org/2/library/time.html
     now = time.localtime()
-    now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
+    #now = time.strptime("20 12 06 11:00", "%y %m %d %H:%M")
     #now = time.strptime("21 11 07 09:00", "%y %m %d %H:%M")
     print(time.strftime("%H:%M %d.%m.%y", now))
 
@@ -210,10 +209,10 @@ while True:
         threadLeft.start()
         threadRight.start()
         
-        os.system(command + " "+ sound)
+        os.system(command + " '"+ sound + "'")
 
         with open("log.txt", "a") as myfile:
-            myfile.write(time.strftime("%H:%M %d.%m.%y", now) + " - " + sound)
+            myfile.write(time.strftime("%H:%M %d.%m.%y", now) + " - " + sound + "\n")
                 
         
         leftClass.stop()
