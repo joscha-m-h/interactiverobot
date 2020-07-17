@@ -16,10 +16,11 @@
 # - ffplay or mplayer (sudo apt-get install mplayer)
 
 # TODO
+# - what happens if invalid sound file
 # - Port everything to old Raspi
-# - Download / create soundsnippets
 # - Solder LEDs and PIR
 # - Create carton prototype
+# - Anonymize (Remove Cookies / passwords / login from chrome, remove truewheelz code, remove github private/public keys)
 
 # Readme
 # Encoding of soundsnippet folder in /home/pi/soundsnippets
@@ -107,12 +108,15 @@ def findFiles(now):
     seasonT = time.strftime("%m", now)
     dayT = time.strftime("%m%d", now)
     timeT = time.strftime("%H%M", now)
+    weekdayT = time.strftime("%w %A", now).lower()
+    print("Weekday " + weekdayT)
     
     seasonSpecific = scanDirectory(os.path.join(soundsnippetDir, "season", seasonT))
+    weekdaySpecific = scanDirectory(os.path.join(soundsnippetDir, "weekday", weekdayT))
     daySpecific = scanDirectory(os.path.join(soundsnippetDir, "day", dayT))
     timeSpecific = scanDirectory(os.path.join(soundsnippetDir, "time", timeT))
     generic = scanDirectory(os.path.join(soundsnippetDir, "generic"))
-    return((seasonSpecific, daySpecific, timeSpecific, generic))
+    return((seasonSpecific, weekdaySpecific, daySpecific, timeSpecific, generic))
     
 def pickRandom(selectionValues): # selection values is a tuple containing [0] = weights, [1] = filenames, [2] = path
     fileName = random.choices(selectionValues[1], weights = selectionValues[0]) # Returns a list with one element
@@ -120,6 +124,13 @@ def pickRandom(selectionValues): # selection values is a tuple containing [0] = 
     print(fileName)
     print(selectionValues[2])
     return(fullpath)
+    
+# Custom length function
+def lenC(thing):
+    if thing is None:
+        return 0
+    else:
+        return len(thing[0])
     
 ### MAIN CODE ##########################################################
 
@@ -133,15 +144,19 @@ while True:
     #now = time.strptime("21 11 07 09:00", "%y %m %d %H:%M")
     print(time.strftime("%H:%M %d.%m.%y", now))
 
-    seasonSpecific, daySpecific, timeSpecific, generic = findFiles(now)
+    seasonSpecific, weekdaySpecific, daySpecific, timeSpecific, generic = findFiles(now)
 
     leftClass = flashingLed(lefteye)
     rightClass = flashingLed(righteye)
 
-    countSeason = len(seasonSpecific[0])
-    countDay = len(daySpecific[0])
-    countTime = len(timeSpecific[0])
-    countGeneric = len(generic[0])
+    print(seasonSpecific)
+    print(weekdaySpecific)
+
+    countSeason = lenC(seasonSpecific)
+    countWeekday = lenC(weekdaySpecific)
+    countDay = lenC(daySpecific)
+    countTime = lenC(timeSpecific)
+    countGeneric = lenC(generic)
 
     # Decide which song category to play
     if getRandom(70):
@@ -150,6 +165,9 @@ while True:
     elif countSeason > 0  and getRandom(30):
         print("Playing seasonal")
         sound = pickRandom(seasonSpecific)
+    elif countWeekday > 0  and getRandom(20):
+        print("Playing weekday")
+        sound = pickRandom(weekdaySpecific)
     elif countDay > 0 and getRandom(70):
         print("Playing day specific")
         sound = pickRandom(daySpecific)
@@ -177,7 +195,7 @@ while True:
         
     else: 
         print("PLAYING SOUND: " + sound)
-        sound = "/home/pi/Downloads/test.mp3" # TODO DELETE
+        #sound = "/home/pi/Downloads/test.mp3" # TODO DELETE
         # Console command ffplay (does not stop automatically)
         # ffplay -nodisp -hide_banner ../../Downloads/test.mp3 
         #command = "ffplay -nodisp -hide_banner"
@@ -191,9 +209,12 @@ while True:
 
         threadLeft.start()
         threadRight.start()
-        print("playing")
         
         os.system(command + " "+ sound)
+
+        with open("log.txt", "a") as myfile:
+            myfile.write(time.strftime("%H:%M %d.%m.%y", now) + " - " + sound)
+                
         
         leftClass.stop()
         rightClass.stop()
